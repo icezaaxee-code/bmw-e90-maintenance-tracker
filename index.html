@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BMW E90 Maintenance Tracker & Summary</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Google Fonts Prompt -->
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Prompt', sans-serif; background-color: #0b0f19; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8);
+      cursor: pointer;
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .luxury-glow {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen p-4 md:p-8">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-5 gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+          <span class="bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">BMW E90</span> 
+          <span class="text-slate-300 font-light">Maintenance Suite</span>
+        </h1>
+        <p class="text-slate-400 text-xs md:text-sm tracking-wide mt-1">ระบบบริหารจัดการและคาดการณ์รอบซ่อมบำรุงระดับพรีเมียม (320i N46 / ZF 6HP19)</p>
+      </div>
+
+      <!-- Action Buttons & Mileage Card -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <button type="button" onclick="openServiceModal()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs md:text-sm font-medium px-4 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center gap-2 border border-blue-400/35">
+          <span>🛠️</span> บันทึกการซ่อมใหม่
+        </button>
+
+        <div class="glass-card px-4 py-2.5 rounded-xl flex items-center gap-4">
+          <div>
+            <span class="text-[10px] uppercase tracking-wider text-slate-400 block font-medium">เลขไมล์ปัจจุบัน</span>
+            <span id="currentMileageText" class="text-xl font-bold text-blue-400">0</span>
+            <span class="text-xs text-slate-400">กม.</span>
+          </div>
+          <button type="button" onclick="updateMileagePrompt()" class="bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 p-2 rounded-lg transition border border-slate-700">
+            ✏️
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Section: Summary Statistics Cards (4 Columns) -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden group hover:border-blue-500/40 transition">
+        <div class="absolute -right-4 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition">🛠️</div>
+        <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl text-xl border border-blue-500/20">🛠️</div>
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">ยอดซ่อมรวมปีนี้ (<span id="currentYearLabel">2026</span>)</span>
+          <span id="statTotalItems" class="text-xl font-bold text-white tracking-tight">0 รายการ</span>
+        </div>
+      </div>
+      <div class="glass-card p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden group hover:border-emerald-500/40 transition">
+        <div class="absolute -right-4 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition">💰</div>
+        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl text-xl border border-emerald-500/20">💰</div>
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">ค่าใช้จ่ายรวมปีนี้</span>
+          <span id="statTotalCost" class="text-xl font-bold text-emerald-400 tracking-tight">฿0.00</span>
+        </div>
+      </div>
+      <div class="glass-card p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden group hover:border-purple-500/40 transition">
+        <div class="absolute -right-4 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition">📊</div>
+        <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl text-xl border border-purple-500/20">📊</div>
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">งบซ่อมทั้งหมด (ทุกปี)</span>
+          <span id="statAllTimeCost" class="text-xl font-bold text-purple-400 tracking-tight">฿0.00</span>
+        </div>
+      </div>
+      <div class="glass-card p-4 rounded-2xl flex items-center gap-4 relative overflow-hidden group hover:border-amber-500/40 transition">
+        <div class="absolute -right-4 -bottom-4 text-6xl opacity-5 group-hover:opacity-10 transition">⏱️</div>
+        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl text-xl border border-amber-500/20">⏱️</div>
+        <div>
+          <span class="text-xs text-slate-400 block font-medium">ระยะเวลาจอดอู่รวมปีนี้</span>
+          <span id="statTotalDays" class="text-xl font-bold text-amber-400 tracking-tight">0 วัน</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section: BMW E90 Gallery Showcase -->
+    <section class="glass-card rounded-2xl p-5 space-y-3 luxury-glow">
+      <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+        <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <span class="text-blue-400">🚘</span> BMW E90 320i SE (2005) — ทะเบียน <span class="text-white font-mono bg-slate-800 px-2 py-0.5 rounded border border-slate-700">7กท 5038 นครพนม</span>
+        </h2>
+        <span class="text-xs text-slate-400 font-medium tracking-wide">VEHICLE SHOWCASE</span>
+      </div>
+      
+      <div class="w-full h-72 md:h-96 bg-slate-950/80 rounded-xl overflow-hidden relative border border-slate-800/80 flex items-center justify-center">
+        <img id="mainCarImage" src="car.png" alt="BMW E90 Showcase" class="w-full h-full object-contain transition-all duration-500 hover:scale-[1.02]">
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-1">
+        <button onclick="changeCarImage('car.png', this)" class="car-thumb border-2 border-blue-500 rounded-xl overflow-hidden h-20 bg-slate-950 transition hover:opacity-85 flex items-center justify-center p-1 shadow-md">
+          <img src="car.png" class="w-full h-full object-cover rounded-lg">
+        </button>
+      </div>
+    </section>
+
+    <!-- Section: Prediction & Maintenance Status (Grouped by Category) -->
+    <section class="space-y-6">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>📊</span> สถานะและการคาดการณ์รอบซ่อมบำรุง (แบ่งตามหมวดหมู่)
+        </h2>
+        <span class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60">💡 คลิกการ์ดเพื่อดูรายละเอียดหรือแก้ไข</span>
+      </div>
+      
+      <!-- Container for Categorized Grids -->
+      <div id="categorizedStatusContainer" class="space-y-8">
+        <div class="text-center py-12 text-slate-500 glass-card rounded-2xl">กำลังโหลดข้อมูลสถานะ...</div>
+      </div>
+    </section>
+
+    <!-- Section: Service History Table -->
+    <section class="glass-card p-6 rounded-2xl">
+      <div class="flex justify-between items-center mb-5 border-b border-slate-700/60 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>📜</span> ประวัติการซ่อมบำรุงล่าสุด
+        </h2>
+        <span class="text-xs text-slate-400">Service Logs</span>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-900/80 text-xs uppercase text-slate-400 border-b border-slate-700/80 rounded-lg">
+            <tr>
+              <th class="p-3.5 rounded-l-lg">ช่วงวันที่ซ่อม</th>
+              <th class="p-3.5">รายการ</th>
+              <th class="p-3.5">ระยะเวลา</th>
+              <th class="p-3.5">เลขไมล์ / ค่าใช้จ่าย</th>
+              <th class="p-3.5">หลักฐาน</th>
+              <th class="p-3.5">หมายเหตุ</th>
+              <th class="p-3.5 rounded-r-lg text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="7" class="text-center py-8 text-slate-500">กำลังโหลดประวัติ...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Debug Console Panel -->
+    <section class="bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 space-y-2 shadow-inner">
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+        <h3 class="text-xs font-mono text-amber-400 font-semibold flex items-center gap-2">
+          <span>🐞</span> Debug & System Log
+        </h3>
+        <div class="flex gap-2">
+          <button onclick="testConnection()" class="bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-300 px-2.5 py-1 rounded transition border border-slate-800">🔄 Test Connection</button>
+          <button onclick="clearDebugLog()" class="bg-slate-900 hover:bg-slate-800 text-[11px] text-slate-400 px-2.5 py-1 rounded transition border border-slate-800">🗑️ Clear</button>
+        </div>
+      </div>
+      <pre id="debugLog" class="bg-slate-900/60 text-[11px] font-mono p-3 rounded-xl overflow-x-auto h-28 text-slate-300 space-y-1">system initializing...</pre>
+    </section>
+
+  </div>
+
+  <!-- Modal: Add Service Record -->
+  <div id="serviceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="glass-card border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>🛠️</span> บันทึกการซ่อมบำรุงใหม่
+        </h3>
+        <button onclick="closeServiceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition">✕</button>
+      </div>
+      
+      <form id="serviceForm" onsubmit="handleSaveService(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">รายการอะไหล่ / การซ่อม</label>
+          <div class="flex gap-2">
+            <select id="partSelect" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner">
+              <option value="">-- กำลังโหลดรายการ --</option>
+            </select>
+            <button type="button" onclick="openNewPartModal()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs px-3 rounded-xl border border-slate-700 transition whitespace-nowrap">➕ เพิ่มหมวด</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">เลขไมล์ขณะซ่อม (กม.)</label>
+          <input type="number" id="serviceMileage" required placeholder="เช่น 150000" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-medium text-slate-300">📅 วันที่นำรถเข้าซ่อม</label>
+              <button type="button" onclick="setTodayDate('serviceDate')" class="text-[10px] text-blue-400 hover:underline">วันนี้</button>
+            </div>
+            <input type="date" id="serviceDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-medium text-slate-300">🏁 วันที่ซ่อมเสร็จ</label>
+              <button type="button" onclick="setTodayDate('serviceEndDate')" class="text-[10px] text-blue-400 hover:underline">วันนี้</button>
+            </div>
+            <input type="date" id="serviceEndDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">ค่าใช้จ่าย (บาท)</label>
+          <input type="number" step="0.01" id="serviceCost" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-slate-700/60">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">📷 รูปภาพปัญหา / อะไหล่เสีย</label>
+            <input type="file" id="issueImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">🧾 รูปสลิปโอนเงิน / ใบเสร็จอู่</label>
+            <input type="file" id="receiptImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">หมายเหตุ / อู่ / ยี่ห้ออะไหล่</label>
+          <textarea id="serviceNotes" rows="2" placeholder="เช่น เปลี่ยนน้ำมันเกียร์ ZF, อู่..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" onclick="closeServiceModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-xl text-slate-300 transition font-medium">ยกเลิก</button>
+          <button type="submit" id="btnSubmit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition text-xs shadow-lg shadow-blue-600/30">
+            บันทึกประวัติการซ่อม
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Maintenance Schedule / Details -->
+  <div id="editScheduleModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="glass-card border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>⚙️</span> แก้ไขรอบการซ่อมบำรุงและวันที่
+        </h3>
+        <button onclick="closeEditScheduleModal()" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition">✕</button>
+      </div>
+
+      <form id="editScheduleForm" onsubmit="handleSaveScheduleEdit(event)" class="space-y-3">
+        <input type="hidden" id="editScheduleId" />
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">หมวดหมู่</label>
+          <input type="text" id="editCategory" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">ชื่อรายการซ่อม / อะไหล่</label>
+          <input type="text" id="editPartName" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">รอบเปลี่ยน (กิโลเมตร)</label>
+            <input type="number" id="editIntervalKm" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">รอบเปลี่ยน (เดือน)</label>
+            <input type="number" id="editIntervalMonths" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-700/60">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">📅 วันที่ทำล่าสุด (ไม่บังคับ)</label>
+            <input type="date" id="editLastServiceDate" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">🏁 วันที่รอบซ่อมถัดไป (ไม่บังคับ)</label>
+            <input type="date" id="editNextDueDate" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">คำอธิบายเพิ่มเติม</label>
+          <input type="text" id="editDescription" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div class="flex justify-between items-center pt-3">
+          <button type="button" onclick="deleteScheduleItem()" class="px-4 py-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white text-xs rounded-xl transition border border-rose-500/20 font-medium">🗑️ ลบรายการนี้</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeEditScheduleModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl text-slate-300 font-medium">ยกเลิก</button>
+            <button type="submit" id="btnSaveSchedule" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs rounded-xl text-white font-medium shadow-lg shadow-blue-600/30">บันทึกการแก้ไข</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Part/Schedule -->
+  <div id="newPartModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="glass-card border border-slate-700/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+        <h3 class="text-lg font-bold text-white">➕ เพิ่มประเภทงานซ่อม/อะไหล่ใหม่</h3>
+        <button onclick="closeNewPartModal()" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition">✕</button>
+      </div>
+
+      <form id="newPartForm" onsubmit="handleSaveNewPart(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">หมวดหมู่</label>
+          <input type="text" id="newPartCategory" required placeholder="เช่น ENGINE, COOLING, TRANSMISSION" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">ชื่อรายการซ่อม / อะไหล่</label>
+          <input type="text" id="newPartName" required placeholder="เช่น เปลี่ยนโช๊คอัพ" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">รอบเปลี่ยน (กิโลเมตร)</label>
+            <input type="number" id="newPartIntervalKm" placeholder="เช่น 40000" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">รอบเปลี่ยน (เดือน)</label>
+            <input type="number" id="newPartIntervalMonths" placeholder="เช่น 24" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">คำอธิบายเพิ่มเติม</label>
+          <input type="text" id="newPartDesc" placeholder="เช่น รายละเอียดสเปกอะไหล่" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeNewPartModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl text-slate-300 font-medium">ยกเลิก</button>
+          <button type="submit" id="btnSavePart" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs rounded-xl text-white font-medium shadow-lg shadow-blue-600/30">บันทึกรายการใหม่</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: View Image Lightbox -->
+  <div id="imageModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50" onclick="closeImageModal()">
+    <div class="max-w-2xl w-full p-2 relative text-center">
+      <img id="previewImage" src="" class="max-h-[80vh] mx-auto rounded-2xl border border-slate-700 shadow-2xl"/>
+      <p id="imageCaption" class="text-xs text-slate-300 mt-3 font-medium tracking-wide"></p>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Service Record -->
+  <div id="editServiceModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="glass-card border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>✏️</span> แก้ไขประวัติการซ่อมบำรุงย้อนหลัง
+        </h3>
+        <button onclick="closeEditServiceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition">✕</button>
+      </div>
+      
+      <form id="editServiceForm" onsubmit="handleUpdateService(event)" class="space-y-4">
+        <input type="hidden" id="editServiceId" />
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">รายการอะไหล่ / การซ่อม</label>
+          <select id="editServicePartSelect" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner">
+            <option value="">-- เลือกรายการ --</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">เลขไมล์ขณะซ่อม (กม.)</label>
+          <input type="number" id="editServiceMileage" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">📅 วันที่นำรถเข้าซ่อม</label>
+            <input type="date" id="editServiceDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">🏁 วันที่ซ่อมเสร็จ</label>
+            <input type="date" id="editServiceEndDate" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">ค่าใช้จ่าย (บาท)</label>
+          <input type="number" step="0.01" id="editServiceCost" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner" />
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-slate-700/60">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">📷 อัปเดต/เพิ่ม รูปภาพปัญหา (ไม่บังคับ)</label>
+            <input type="file" id="editIssueImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">🧾 อัปเดต/เพิ่ม รูปสลิป/ใบเสร็จ (ไม่บังคับ)</label>
+            <input type="file" id="editReceiptImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">หมายเหตุ / อู่ / ยี่ห้ออะไหล่</label>
+          <textarea id="editServiceNotes" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 shadow-inner"></textarea>
+        </div>
+        <div class="flex justify-between items-center pt-3">
+          <button type="button" onclick="deleteServiceRecord()" class="px-4 py-2 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white text-xs rounded-xl transition border border-rose-500/20 font-medium">🗑️ ลบประวัติการซ่อมนี้</button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeEditServiceModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl text-slate-300 font-medium">ยกเลิก</button>
+            <button type="submit" id="btnUpdateService" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs rounded-xl text-white font-medium shadow-lg shadow-blue-600/30">บันทึกการแก้ไข</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript App Logic -->
+  <script>
+    const SUPABASE_URL = "https://rhevzzzzwljyqkmkvdsu.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoZXZ6enp6d2xqeXFrbWt2ZHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzNjk5MDQsImV4cCI6MjEwNzk0NTkwNH0.k-0wyhiPgFPhF3GN3hwmLyoBK8bmejnm9r_MGEZhRFI";
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let vehicleId = null;
+    let currentMileage = 0;
+
+    function logDebug(message, type = 'info') {
+      const logContainer = document.getElementById('debugLog');
+      const time = new Date().toLocaleTimeString('th-TH');
+      let colorClass = 'text-slate-300';
+      if (type === 'error') colorClass = 'text-rose-400 font-bold';
+      if (type === 'success') colorClass = 'text-emerald-400 font-bold';
+      if (type === 'warn') colorClass = 'text-amber-400';
+
+      logContainer.innerHTML += `<div class="${colorClass}">[${time}] ${message}</div>`;
+      logContainer.scrollTop = logContainer.scrollHeight;
+      console.log(`[${type.toUpperCase()}]`, message);
+    }
+
+    function clearDebugLog() {
+      document.getElementById('debugLog').innerHTML = '';
+    }
+
+    function setTodayDate(elementId) {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById(elementId).value = today;
+    }
+
+    setTodayDate('serviceDate');
+    setTodayDate('serviceEndDate');
+
+    function changeCarImage(imageSrc, thumbElement) {
+      document.getElementById('mainCarImage').src = imageSrc;
+      document.querySelectorAll('.car-thumb').forEach(el => {
+        el.classList.remove('border-blue-500');
+        el.classList.add('border-transparent');
+      });
+      thumbElement.classList.remove('border-transparent');
+      thumbElement.classList.add('border-blue-500');
+    }
+
+    async function initApp() {
+      logDebug("🚀 Starting application initialization...", 'info');
+      await testConnection();
+      await loadVehicleStatus();
+      await loadMaintenanceScheduleOptions();
+      await loadMaintenanceStatusView();
+      await loadServiceHistory();
+    }
+
+    async function testConnection() {
+      try {
+        const { error } = await supabaseClient.from('vehicle_status').select('count', { count: 'exact', head: true });
+        if (error) logDebug(`❌ Connection Failed: ${error.message}`, 'error');
+        else logDebug("✅ Supabase Connection Successful!", 'success');
+      } catch (err) {
+        logDebug(`❌ Unexpected Error: ${err.message}`, 'error');
+      }
+    }
+
+    async function loadVehicleStatus() {
+      try {
+        const { data, error } = await supabaseClient.from('vehicle_status').select('*').limit(1).single();
+        if (error) return logDebug(`❌ Error loading vehicle_status: ${error.message}`, 'error');
+        if (data) {
+          vehicleId = data.id;
+          currentMileage = data.current_mileage;
+          document.getElementById('currentMileageText').innerText = currentMileage.toLocaleString();
+          logDebug(`✅ Loaded Vehicle ID: ${vehicleId}, Current Mileage: ${currentMileage} km`, 'success');
+        }
+      } catch (err) {
+        logDebug(`❌ Exception in loadVehicleStatus: ${err.message}`, 'error');
+      }
+    }
+
+    async function updateMileagePrompt() {
+      if (!vehicleId) return alert("ไม่พบ ID รถยนต์ในระบบ");
+      const newMileage = prompt("กรอกเลขไมล์ปัจจุบันของรถ (กิโลเมตร):", currentMileage);
+      if (newMileage && !isNaN(newMileage)) {
+        const val = parseInt(newMileage);
+        const { error } = await supabaseClient.from('vehicle_status').update({ current_mileage: val, last_updated: new Date().toISOString() }).eq('id', vehicleId);
+        if (!error) {
+          alert("อัปเดตเลขไมล์เรียบร้อย!");
+          initApp();
+        } else alert("เกิดข้อผิดพลาด: " + error.message);
+      }
+    }
+
+    async function loadMaintenanceScheduleOptions() {
+      const select = document.getElementById('partSelect');
+      try {
+        const { data, error } = await supabaseClient.from('maintenance_schedule').select('id, part_name, category').order('category');
+        if (error) return logDebug(`❌ Error loading schedule options: ${error.message}`, 'error');
+
+        select.innerHTML = '<option value="">-- เลือกรายการ --</option>';
+        if (data && data.length > 0) {
+          data.forEach(item => {
+            select.innerHTML += `<option value="${item.id}">${item.category}: ${item.part_name}</option>`;
+          });
+        }
+      } catch (err) {
+        logDebug(`❌ Exception in loadMaintenanceScheduleOptions: ${err.message}`, 'error');
+      }
+    }
+
+    // ฟังก์ชันอัปโหลดไฟล์ที่อ้างอิงผ่าน ID ของ input file
+    async function uploadAttachment(fileInputId, folderName) {
+      const fileInput = document.getElementById(fileInputId);
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        return null;
+      }
+
+      const file = fileInput.files[0];
+      logDebug(`📁 กำลังอัปโหลดไฟล์: ${file.name} ไปยังโฟลเดอร์ ${folderName}...`, 'info');
+
+      try {
+        const fileExt = file.name.split('.').pop();
+        // จัดรูปแบบ path ให้สะอาดและรองรับการอ่านตรงๆ
+        const fileName = `${folderName}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabaseClient.storage
+          .from('service-attachments')
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) {
+          logDebug(`❌ Supabase Storage Error: ${uploadError.message}`, 'error');
+          alert("อัปโหลดรูปไม่สำเร็จ: " + uploadError.message);
+          return null;
+        }
+
+        // ดึง Public URL แบบระบุ path ตรงๆ ให้ถูกต้อง
+        const { data } = supabaseClient.storage
+          .from('service-attachments')
+          .getPublicUrl(fileName);
+
+        logDebug(`✅ อัปโหลดสำเร็จ! URL: ${data.publicUrl}`, 'success');
+        return data.publicUrl;
+      } catch (err) {
+        logDebug(`❌ Upload Exception: ${err.message}`, 'error');
+        return null;
+      }
+    }
+
+    // 1. ฟังก์ชันบันทึกประวัติการซ่อมใหม่ (แก้ไขการส่งค่า URL รูปภาพเข้าตาราง)
+    async function handleSaveService(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmit');
+      btn.innerText = "กำลังอัปโหลดรูปและบันทึก...";
+      btn.disabled = true;
+
+      const partId = document.getElementById('partSelect').value;
+      const mileage = parseInt(document.getElementById('serviceMileage').value);
+      const startDate = document.getElementById('serviceDate').value;
+      const endDate = document.getElementById('serviceEndDate').value;
+      const cost = parseFloat(document.getElementById('serviceCost').value) || 0;
+      const notes = document.getElementById('serviceNotes').value;
+
+      if (new Date(endDate) < new Date(startDate)) {
+        alert("วันที่ซ่อมเสร็จต้องไม่ก่อนวันที่นำรถเข้าซ่อม!");
+        btn.innerText = "บันทึกประวัติการซ่อม";
+        btn.disabled = false;
+        return;
+      }
+
+      // ทำการอัปโหลดไฟล์และรอรับค่า Public URL กลับมา
+      const issueImageUrl = await uploadAttachment('issueImage', 'issues');
+      const receiptImageUrl = await uploadAttachment('receiptImage', 'receipts');
+
+      logDebug(`💾 กำลังบันทึกข้อมูลลงตาราง -> Issue URL: ${issueImageUrl}, Receipt URL: ${receiptImageUrl}`, 'info');
+
+      // ส่งค่า URL เข้าฟิลด์ในตาราง service_records โดยตรง
+      const { error } = await supabaseClient.from('service_records').insert([{
+        part_id: partId,
+        mileage_at_service: mileage,
+        service_date: startDate,
+        service_end_date: endDate,
+        cost: cost,
+        notes: notes,
+        issue_image_url: issueImageUrl,
+        receipt_image_url: receiptImageUrl
+      }]);
+
+      if (!error) {
+        if (mileage > currentMileage && vehicleId) {
+          await supabaseClient.from('vehicle_status').update({ current_mileage: mileage, last_updated: new Date().toISOString() }).eq('id', vehicleId);
+        }
+        alert("บันทึกประวัติการซ่อมและอัปโหลดรูปภาพสำเร็จ!");
+        document.getElementById('serviceForm').reset();
+        setTodayDate('serviceDate');
+        setTodayDate('serviceEndDate');
+        closeServiceModal();
+        initApp();
+      } else {
+        logDebug(`❌ Save Service Error: ${error.message}`, 'error');
+        alert("เกิดข้อผิดพลาดในการบันทึก: " + error.message);
+      }
+
+      btn.innerText = "บันทึกประวัติการซ่อม";
+      btn.disabled = false;
+    }
+
+    // 2. ฟังก์ชันอัปเดตประวัติการซ่อม (ตอนกดแก้ไข)
+    async function handleUpdateService(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnUpdateService');
+      btn.innerText = "กำลังอัปโหลดรูปและบันทึก...";
+      btn.disabled = true;
+
+      const id = document.getElementById('editServiceId').value;
+      const partId = document.getElementById('editServicePartSelect').value;
+      const mileage = parseInt(document.getElementById('editServiceMileage').value);
+      const serviceDate = document.getElementById('editServiceDate').value;
+      const serviceEndDate = document.getElementById('editServiceEndDate').value;
+      const cost = parseFloat(document.getElementById('editServiceCost').value) || 0;
+      const notes = document.getElementById('editServiceNotes').value;
+
+      // ดึงค่า URL รูปเดิมสำรองไว้
+      const modalEl = document.getElementById('editServiceModal');
+      let issueImageUrl = modalEl.dataset.oldIssue || null;
+      let receiptImageUrl = modalEl.dataset.oldReceipt || null;
+
+      // ถ้ามีการเลือกไฟล์ใหม่ ให้อัปโหลดและแทนที่ด้วย URL ใหม่ทันที
+      const uploadedIssueUrl = await uploadAttachment('editIssueImage', 'issues');
+      if (uploadedIssueUrl) issueImageUrl = uploadedIssueUrl;
+
+      const uploadedReceiptUrl = await uploadAttachment('editReceiptImage', 'receipts');
+      if (uploadedReceiptUrl) receiptImageUrl = uploadedReceiptUrl;
+
+      logDebug(`💾 กำลังอัปเดตข้อมูล ID ${id} -> Issue URL: ${issueImageUrl}, Receipt URL: ${receiptImageUrl}`, 'info');
+
+      const { error } = await supabaseClient.from('service_records').update({
+        part_id: partId,
+        mileage_at_service: mileage,
+        service_date: serviceDate,
+        service_end_date: serviceEndDate,
+        cost: cost,
+        notes: notes,
+        issue_image_url: issueImageUrl,
+        receipt_image_url: receiptImageUrl
+      }).eq('id', id);
+
+      if (!error) {
+        alert("อัปเดตประวัติและหลักฐานการซ่อมสำเร็จ!");
+        closeEditServiceModal();
+        initApp();
+      } else {
+        logDebug(`❌ Update Service Error: ${error.message}`, 'error');
+        alert("เกิดข้อผิดพลาดในการอัปเดต: " + error.message);
+      }
+
+      btn.innerText = "บันทึกการแก้ไข";
+      btn.disabled = false;
+    }
+
+    async function handleSaveScheduleEdit(e) {
+      e.preventDefault();
+      const id = document.getElementById('editScheduleId').value;
+      const category = document.getElementById('editCategory').value.trim();
+      const partName = document.getElementById('editPartName').value.trim();
+      const intervalKm = parseInt(document.getElementById('editIntervalKm').value) || 0;
+      const intervalMonths = parseInt(document.getElementById('editIntervalMonths').value) || 0;
+      const description = document.getElementById('editDescription').value.trim();
+      const lastServiceDate = document.getElementById('editLastServiceDate').value || null;
+      const nextDueDate = document.getElementById('editNextDueDate').value || null;
+
+      const btn = document.getElementById('btnSaveSchedule');
+      btn.innerText = "กำลังบันทึก...";
+      btn.disabled = true;
+
+      const { error } = await supabaseClient.from('maintenance_schedule').update({
+        category: category,
+        part_name: partName,
+        interval_km: intervalKm,
+        interval_months: intervalMonths,
+        description: description,
+        last_service_date: lastServiceDate,
+        next_due_date: nextDueDate
+      }).eq('id', id);
+
+      if (!error) {
+        alert("อัปเดตข้อมูลรอบซ่อมสำเร็จ!");
+        closeEditScheduleModal();
+        await initApp();
+      } else {
+        alert("เกิดข้อผิดพลาดในการแก้ไข: " + error.message);
+      }
+      btn.innerText = "บันทึกการแก้ไข";
+      btn.disabled = false;
+    }
+
+    async function deleteScheduleItem() {
+      const id = document.getElementById('editScheduleId').value;
+      if (!confirm("คุณแน่ใจหรือไม่ที่จะลบรายการนี้? ข้อมูลใน Supabase จะถูกลบออกทันที")) return;
+
+      await supabaseClient.from('service_records').delete().eq('part_id', id);
+      const { error } = await supabaseClient.from('maintenance_schedule').delete().eq('id', id);
+      
+      if (!error) {
+        alert("ลบรายการสำเร็จ!");
+        closeEditScheduleModal();
+        await initApp();
+      } else {
+        alert("เกิดข้อผิดพลาดในการลบ: " + error.message);
+      }
+    }
+
+    async function loadServiceHistory() {
+      const tbody = document.getElementById('historyTableBody');
+      try {
+        const { data, error } = await supabaseClient
+          .from('service_records')
+          .select('id, part_id, service_date, service_end_date, mileage_at_service, cost, notes, issue_image_url, receipt_image_url, maintenance_schedule(part_name, category)')
+          .order('service_date', { ascending: false });
+
+        if (error) return logDebug(`❌ History Error: ${error.message}`, 'error');
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-500">ยังไม่มีประวัติการซ่อมบำรุง</td></tr>';
+          updateStatistics([]);
+          return;
+        }
+
+        updateStatistics(data);
+
+        data.forEach(row => {
+          const partName = row.maintenance_schedule ? `${row.maintenance_schedule.category}: ${row.maintenance_schedule.part_name}` : 'ทั่วไป';
+          
+          const start = new Date(row.service_date);
+          const end = new Date(row.service_end_date || row.service_date);
+          const diffTime = Math.abs(end - start);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+          let attachmentsHtml = '<span class="text-slate-600">-</span>';
+          let buttons = [];
+          if (row.issue_image_url) buttons.push(`<button onclick="viewImage('${row.issue_image_url}', 'รูปปัญหา/อะไหล่เสีย')" class="text-xs bg-rose-950/60 text-rose-400 border border-rose-800/60 px-2 py-1 rounded-lg hover:bg-rose-900 transition">📷 ปัญหา</button>`);
+          if (row.receipt_image_url) buttons.push(`<button onclick="viewImage('${row.receipt_image_url}', 'สลิป/ใบเสร็จการซ่อม')" class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2 py-1 rounded-lg hover:bg-emerald-900 transition">🧾 สลิป</button>`);
+          if (buttons.length > 0) attachmentsHtml = `<div class="flex gap-1.5 flex-wrap">${buttons.join('')}</div>`;
+
+          const escapedNotes = (row.notes || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+          tbody.innerHTML += `
+            <tr class="border-b border-slate-800/60 hover:bg-slate-800/30 transition">
+              <td class="p-3.5 text-slate-300 text-xs">
+                <div class="font-medium">เข้า: ${row.service_date}</div>
+                <div class="text-slate-400">เสร็จ: ${row.service_end_date || row.service_date}</div>
+              </td>
+              <td class="p-3.5 font-medium text-slate-100">${partName}</td>
+              <td class="p-3.5 text-amber-400 font-semibold text-xs">ใช้เวลา ${diffDays} วัน</td>
+              <td class="p-3.5 text-slate-300">
+                <div class="text-xs text-blue-400 font-medium">${row.mileage_at_service.toLocaleString()} กม.</div>
+                <div class="text-emerald-400 font-semibold">฿${row.cost.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+              </td>
+              <td class="p-3.5">${attachmentsHtml}</td>
+              <td class="p-3.5 text-slate-400 text-xs">${row.notes || '-'}</td>
+              <td class="p-3.5 text-center">
+                <button onclick="openEditServiceModal('${row.id}', '${row.part_id || ''}', ${row.mileage_at_service}, '${row.service_date}', '${row.service_end_date || row.service_date}', ${row.cost}, '${escapedNotes}', '${row.issue_image_url || ''}', '${row.receipt_image_url || ''}')" 
+                        class="bg-slate-800 hover:bg-blue-600/30 text-blue-400 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                  ✏️ แก้ไข
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        logDebug(`❌ Exception in loadServiceHistory: ${err.message}`, 'error');
+      }
+    }
+
+    function updateStatistics(records) {
+      const currentYear = new Date().getFullYear();
+      document.getElementById('currentYearLabel').innerText = currentYear;
+
+      let totalItemsYear = 0;
+      let totalCostYear = 0;
+      let totalDaysYear = 0;
+      let allTimeCost = 0;
+
+      records.forEach(row => {
+        const cost = Number(row.cost || 0);
+        allTimeCost += cost;
+
+        const rowYear = new Date(row.service_date).getFullYear();
+        if (rowYear === currentYear) {
+          totalItemsYear++;
+          totalCostYear += cost;
+
+          const start = new Date(row.service_date);
+          const end = new Date(row.service_end_date || row.service_date);
+          const diffTime = Math.abs(end - start);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          totalDaysYear += diffDays;
+        }
+      });
+
+      document.getElementById('statTotalItems').innerText = `${totalItemsYear} รายการ`;
+      document.getElementById('statTotalCost').innerText = `฿${totalCostYear.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+      document.getElementById('statAllTimeCost').innerText = `฿${allTimeCost.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+      document.getElementById('statTotalDays').innerText = `${totalDaysYear} วัน`;
+    }
+
+    async function loadMaintenanceStatusView() {
+      const container = document.getElementById('categorizedStatusContainer');
+      try {
+        const { data, error } = await supabaseClient.from('view_maintenance_status').select('*').order('category');
+        if (error) return container.innerHTML = `<div class="text-center py-4 text-rose-400">เกิดข้อผิดพลาดในการโหลดสถานะ: ${error.message}</div>`;
+
+        container.innerHTML = '';
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="text-center py-8 text-slate-500 glass-card rounded-2xl">ไม่มีข้อมูลเกณฑ์ซ่อมบำรุง</div>';
+          return;
+        }
+
+        const groups = {};
+        data.forEach(item => {
+          const cat = item.category || 'OTHER';
+          if (!groups[cat]) groups[cat] = [];
+          groups[cat].push(item);
+        });
+
+        for (const [category, items] of Object.entries(groups)) {
+          let categoryIcon = '⚙️';
+          if (category.includes('ENGINE')) categoryIcon = '🔧';
+          else if (category.includes('COOLING')) categoryIcon = '❄️';
+          else if (category.includes('TRANSMISSION')) categoryIcon = '⚙️';
+          else if (category.includes('SUSPENSION')) categoryIcon = '🚗';
+          else if (category.includes('ELECTRICAL')) categoryIcon = '⚡';
+
+          let cardsHtml = '';
+          items.forEach(item => {
+            let statusColor = "border-emerald-500/80 bg-emerald-950/10";
+            let statusBadge = `<span class="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-1 rounded-lg border border-emerald-500/20 font-medium">ปกติ (OK)</span>`;
+            let remainingText = "";
+
+            if (item.remaining_km !== null) {
+              if (item.remaining_km <= 0) {
+                statusColor = "border-rose-500/80 bg-rose-950/20";
+                statusBadge = `<span class="bg-rose-500/10 text-rose-400 text-xs px-2.5 py-1 rounded-lg border border-rose-500/20 animate-pulse font-medium">🔴 ต้องซ่อมด่วน</span>`;
+                remainingText = `เกินมา <strong class="text-rose-400">${Math.abs(item.remaining_km).toLocaleString()}</strong> กม.`;
+              } else if (item.remaining_km <= 1500) {
+                statusColor = "border-amber-500/80 bg-amber-950/20";
+                statusBadge = `<span class="bg-amber-500/10 text-amber-400 text-xs px-2.5 py-1 rounded-lg border border-amber-500/20 font-medium">🟡 ใกล้ถึงกำหนด</span>`;
+                remainingText = `เหลืออีก <strong class="text-amber-400">${item.remaining_km.toLocaleString()}</strong> กม.`;
+              } else {
+                remainingText = `เหลืออีก <strong class="text-emerald-400">${item.remaining_km.toLocaleString()}</strong> กม.`;
+              }
+            } else remainingText = "ยังไม่มีประวัติการซ่อม";
+
+            const escapedPartName = (item.part_name || '').replace(/'/g, "\\'");
+            const escapedCategory = (item.category || '').replace(/'/g, "\\'");
+            const escapedDesc = (item.description || '').replace(/'/g, "\\'");
+            const lastDateVal = item.last_service_date || '';
+            const nextDateVal = item.next_due_date || '';
+
+            cardsHtml += `
+              <div onclick="openEditScheduleModal('${item.part_id}', '${escapedCategory}', '${escapedPartName}', ${item.interval_km || 0}, ${item.interval_months || 0}, '${escapedDesc}', '${lastDateVal}', '${nextDateVal}')" 
+                   class="glass-card border-l-4 ${statusColor} p-5 rounded-2xl shadow-xl space-y-3 cursor-pointer hover:scale-[1.01] hover:border-blue-400 transition group relative overflow-hidden">
+                <div class="flex justify-between items-start gap-2">
+                  <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider group-hover:text-blue-400 transition">${item.category}</span>
+                  <div class="flex items-center gap-1.5">
+                    ${statusBadge}
+                    <span class="text-xs text-slate-500 group-hover:text-white transition bg-slate-800/80 p-1.5 rounded-lg border border-slate-700/60">✏️</span>
+                  </div>
+                </div>
+                <h3 class="font-bold text-base text-white tracking-tight">${item.part_name}</h3>
+                <div class="text-sm text-slate-200 font-medium pt-0.5">${remainingText}</div>
+                <div class="text-xs text-slate-400 pt-3 border-t border-slate-700/50 space-y-1.5">
+                  <div class="flex justify-between font-mono">
+                    <span>ไมล์ล่าสุด: <span class="text-slate-200">${item.last_service_mileage ? item.last_service_mileage.toLocaleString() + ' กม.' : '-'}</span></span>
+                    <span>ไมล์ถัดไป: <span class="text-slate-200">${item.next_due_mileage ? item.next_due_mileage.toLocaleString() + ' กม.' : '-'}</span></span>
+                  </div>
+                  <div class="flex justify-between text-[11px] text-slate-400">
+                    <span>📅 ทำล่าสุด: ${item.last_service_date || '-'}</span>
+                    <span>🏁 รอบถัดไป: ${item.next_due_date || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          container.innerHTML += `
+            <div class="space-y-3">
+              <h3 class="text-lg font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2">
+                <span>${categoryIcon}</span> หมวดหมู่: ${category}
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                ${cardsHtml}
+              </div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        logDebug(`❌ Exception in loadMaintenanceStatusView: ${err.message}`, 'error');
+      }
+    }
+
+    // Modal Controls
+    function openServiceModal() { document.getElementById('serviceModal').classList.remove('hidden'); }
+    function closeServiceModal() { document.getElementById('serviceModal').classList.add('hidden'); }
+
+    function openEditScheduleModal(id, category, partName, intervalKm, intervalMonths, description, lastServiceDate, nextDueDate) {
+      document.getElementById('editScheduleId').value = id;
+      document.getElementById('editCategory').value = category;
+      document.getElementById('editPartName').value = partName;
+      document.getElementById('editIntervalKm').value = intervalKm;
+      document.getElementById('editIntervalMonths').value = intervalMonths;
+      document.getElementById('editDescription').value = description;
+      document.getElementById('editLastServiceDate').value = (lastServiceDate && lastServiceDate !== 'null') ? lastServiceDate : '';
+      document.getElementById('editNextDueDate').value = (nextDueDate && nextDueDate !== 'null') ? nextDueDate : '';
+      document.getElementById('editScheduleModal').classList.remove('hidden');
+    }
+
+    function closeEditScheduleModal() {
+      document.getElementById('editScheduleModal').classList.add('hidden');
+      document.getElementById('editScheduleForm').reset();
+    }
+
+    function openNewPartModal() { document.getElementById('newPartModal').classList.remove('hidden'); }
+    function closeNewPartModal() { document.getElementById('newPartModal').classList.add('hidden'); document.getElementById('newPartForm').reset(); }
+
+    async function handleSaveNewPart(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSavePart');
+      btn.innerText = "กำลังบันทึก...";
+      btn.disabled = true;
+
+      const category = document.getElementById('newPartCategory').value.trim().toUpperCase();
+      const partName = document.getElementById('newPartName').value.trim();
+      const intervalKm = parseInt(document.getElementById('newPartIntervalKm').value) || 0;
+      const intervalMonths = parseInt(document.getElementById('newPartIntervalMonths').value) || 0;
+      const desc = document.getElementById('newPartDesc').value.trim();
+
+      const { error } = await supabaseClient.from('maintenance_schedule').insert([{
+        category: category,
+        part_name: partName,
+        interval_km: intervalKm,
+        interval_months: intervalMonths,
+        description: desc
+      }]);
+
+      if (!error) {
+        alert("เพิ่มประเภทงานซ่อมใหม่เรียบร้อย!");
+        closeNewPartModal();
+        await initApp();
+      } else {
+        alert("เกิดข้อผิดพลาด: " + error.message);
+      }
+      btn.innerText = "บันทึกรายการใหม่";
+      btn.disabled = false;
+    }
+
+    function viewImage(url, caption) {
+      if (!url) {
+        alert("ไม่พบลิงก์รูปภาพในรายการนี้");
+        return;
+      }
+      let finalUrl = url;
+      if (!url.startsWith('http')) {
+        const { data } = supabaseClient.storage.from('service-attachments').getPublicUrl(url);
+        finalUrl = data.publicUrl;
+      }
+      document.getElementById('previewImage').src = finalUrl;
+      document.getElementById('imageCaption').innerText = caption;
+      document.getElementById('imageModal').classList.remove('hidden');
+    }
+
+    function closeImageModal() {
+      document.getElementById('imageModal').classList.add('hidden');
+    }
+
+    function openEditServiceModal(id, partId, mileage, serviceDate, serviceEndDate, cost, notes, issueImgUrl, receiptImgUrl) {
+      document.getElementById('editServiceId').value = id;
+      
+      const selectHtml = document.getElementById('partSelect').innerHTML;
+      document.getElementById('editServicePartSelect').innerHTML = selectHtml;
+      document.getElementById('editServicePartSelect').value = partId;
+      
+      document.getElementById('editServiceMileage').value = mileage;
+      document.getElementById('editServiceDate').value = serviceDate;
+      document.getElementById('editServiceEndDate').value = serviceEndDate;
+      document.getElementById('editServiceCost').value = cost;
+      document.getElementById('editServiceNotes').value = notes;
+      
+      document.getElementById('editServiceModal').dataset.oldIssue = issueImgUrl || '';
+      document.getElementById('editServiceModal').dataset.oldReceipt = receiptImgUrl || '';
+
+      document.getElementById('editIssueImage').value = '';
+      document.getElementById('editReceiptImage').value = '';
+
+      document.getElementById('editServiceModal').classList.remove('hidden');
+    }
+
+    function closeEditServiceModal() {
+      document.getElementById('editServiceModal').classList.add('hidden');
+      document.getElementById('editServiceForm').reset();
+    }
+
+    async function handleUpdateService(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnUpdateService');
+      btn.innerText = "กำลังอัปโหลดรูปและบันทึก...";
+      btn.disabled = true;
+
+      const id = document.getElementById('editServiceId').value;
+      const partId = document.getElementById('editServicePartSelect').value;
+      const mileage = parseInt(document.getElementById('editServiceMileage').value);
+      const serviceDate = document.getElementById('editServiceDate').value;
+      const serviceEndDate = document.getElementById('editServiceEndDate').value;
+      const cost = parseFloat(document.getElementById('editServiceCost').value) || 0;
+      const notes = document.getElementById('editServiceNotes').value;
+
+      const modalEl = document.getElementById('editServiceModal');
+      let issueImageUrl = modalEl.dataset.oldIssue || null;
+      let receiptImageUrl = modalEl.dataset.oldReceipt || null;
+
+      // แก้ไขการเรียกใช้งานอัปโหลดรูปย้อนหลังให้ถูกต้องโดยอ้างอิงผ่าน ID ของ input file
+      const uploadedIssueUrl = await uploadAttachment('editIssueImage', 'issues');
+      if (uploadedIssueUrl) issueImageUrl = uploadedIssueUrl;
+
+      const uploadedReceiptUrl = await uploadAttachment('editReceiptImage', 'receipts');
+      if (uploadedReceiptUrl) receiptImageUrl = uploadedReceiptUrl;
+
+      const { error } = await supabaseClient.from('service_records').update({
+        part_id: partId,
+        mileage_at_service: mileage,
+        service_date: serviceDate,
+        service_end_date: serviceEndDate,
+        cost: cost,
+        notes: notes,
+        issue_image_url: issueImageUrl,
+        receipt_image_url: receiptImageUrl
+      }).eq('id', id);
+
+      if (!error) {
+        alert("อัปเดตประวัติและหลักฐานการซ่อมสำเร็จ!");
+        closeEditServiceModal();
+        initApp();
+      } else {
+        logDebug(`❌ Update Service Error: ${error.message}`, 'error');
+        alert("เกิดข้อผิดพลาดในการอัปเดต: " + error.message);
+      }
+
+      btn.innerText = "บันทึกการแก้ไข";
+      btn.disabled = false;
+    }
+
+    async function deleteServiceRecord() {
+      const id = document.getElementById('editServiceId').value;
+      if (!confirm("คุณแน่ใจหรือไม่ที่จะลบประวัติการซ่อมนี้?")) return;
+
+      const { error } = await supabaseClient.from('service_records').delete().eq('id', id);
+      if (!error) {
+        alert("ลบประวัติการซ่อมสำเร็จ!");
+        closeEditServiceModal();
+        initApp();
+      } else {
+        alert("เกิดข้อผิดพลาด: " + error.message);
+      }
+    }
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
