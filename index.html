@@ -3,29 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BMW E90 Maintenance Tracker & Summary</title>
+  <title>BMW E90 320i — Executive Maintenance Suite</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Google Fonts Prompt -->
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Inter & Outfit สำหรับลุคที่หรูหรา ทันสมัย และเป็นมืออาชีพ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@450;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
-    body { font-family: 'Prompt', sans-serif; background-color: #0b0f19; }
+    :root {
+      --font-sans: 'Inter', 'Outfit', sans-serif;
+    }
+    body { 
+      font-family: var(--font-sans); 
+      background-color: #07090e; 
+      color: #f3f4f6;
+      letter-spacing: -0.01em;
+    }
     input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(0.8);
+      filter: invert(0.8) hue-rotate(180deg);
       cursor: pointer;
     }
+    /* สไตล์กระจกหรูหรา (Luxury Glassmorphism) */
     .glass-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(145deg, rgba(17, 24, 39, 0.75) 0%, rgba(10, 15, 25, 0.9) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
+    /* แสงเรืองรองสไตล์ BMW M Performance สีฟ้าเข้มพรีเมียม */
     .luxury-glow {
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 30px rgba(37, 99, 235, 0.12), 0 0 60px rgba(0, 0, 0, 0.5);
+    }
+    /* ปรับแต่ง Scrollbar ให้ดูเนียนตา */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #07090e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f2937;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
     }
   </style>
 </head>
@@ -47,6 +76,10 @@
       <div class="flex items-center gap-3 flex-wrap">
         <button type="button" onclick="openServiceModal()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs md:text-sm font-medium px-4 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center gap-2 border border-blue-400/35">
           <span>🛠️</span> บันทึกการซ่อมใหม่
+        </button>
+
+        <button type="button" onclick="scrollToHistory()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm font-medium px-4 py-3 rounded-xl shadow-lg transition flex items-center gap-2 border border-slate-700">
+          <span>📜</span> ประวัติการซ่อม
         </button>
 
         <div class="glass-card px-4 py-2.5 rounded-xl flex items-center gap-4">
@@ -108,12 +141,12 @@
       </div>
       
       <div class="w-full h-72 md:h-96 bg-slate-950/80 rounded-xl overflow-hidden relative border border-slate-800/80 flex items-center justify-center">
-        <img id="mainCarImage" src="car.png" alt="BMW E90 Showcase" class="w-full h-full object-contain transition-all duration-500 hover:scale-[1.02]">
+        <img id="mainCarImage" src="https://rhevzzzzwljyqkmkvdsu.supabase.co/storage/v1/object/public/service-attachments/carshowcase/car.png" alt="BMW E90 Showcase" class="w-full h-full object-contain transition-all duration-500 hover:scale-[1.02]">
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-1">
-        <button onclick="changeCarImage('car.png', this)" class="car-thumb border-2 border-blue-500 rounded-xl overflow-hidden h-20 bg-slate-950 transition hover:opacity-85 flex items-center justify-center p-1 shadow-md">
-          <img src="car.png" class="w-full h-full object-cover rounded-lg">
+        <button onclick="changeCarImage('https://rhevzzzzwljyqkmkvdsu.supabase.co/storage/v1/object/public/service-attachments/carshowcase/car.png', this)" class="car-thumb border-2 border-blue-500 rounded-xl overflow-hidden h-20 bg-slate-950 transition hover:opacity-85 flex items-center justify-center p-1 shadow-md">
+          <img src="https://rhevzzzzwljyqkmkvdsu.supabase.co/storage/v1/object/public/service-attachments/carshowcase/car.png" class="w-full h-full object-cover rounded-lg">
         </button>
       </div>
     </section>
@@ -127,14 +160,13 @@
         <span class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60">💡 คลิกการ์ดเพื่อดูรายละเอียดหรือแก้ไข</span>
       </div>
       
-      <!-- Container for Categorized Grids -->
       <div id="categorizedStatusContainer" class="space-y-8">
         <div class="text-center py-12 text-slate-500 glass-card rounded-2xl">กำลังโหลดข้อมูลสถานะ...</div>
       </div>
     </section>
 
     <!-- Section: Service History Table -->
-    <section class="glass-card p-6 rounded-2xl">
+    <section id="serviceHistorySection" class="glass-card p-6 rounded-2xl scroll-mt-6">
       <div class="flex justify-between items-center mb-5 border-b border-slate-700/60 pb-3">
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
           <span>📜</span> ประวัติการซ่อมบำรุงล่าสุด
@@ -230,12 +262,12 @@
 
         <div class="space-y-3 pt-2 border-t border-slate-700/60">
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">📷 รูปภาพปัญหา / อะไหล่เสีย</label>
-            <input type="file" id="issueImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+            <label class="block text-xs font-medium text-slate-300 mb-1">📷 รูปภาพปัญหา / อะไหล่เสีย (เลือกได้หลายไฟล์)</label>
+            <input type="file" id="issueImage" accept="image/*" multiple class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">🧾 รูปสลิปโอนเงิน / ใบเสร็จอู่</label>
-            <input type="file" id="receiptImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+            <label class="block text-xs font-medium text-slate-300 mb-1">🧾 รูปสลิปโอนเงิน / ใบเสร็จอู่ (เลือกได้หลายไฟล์)</label>
+            <input type="file" id="receiptImage" accept="image/*" multiple class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
           </div>
         </div>
 
@@ -350,8 +382,9 @@
 
   <!-- Modal: View Image Lightbox -->
   <div id="imageModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50" onclick="closeImageModal()">
-    <div class="max-w-2xl w-full p-2 relative text-center">
-      <img id="previewImage" src="" class="max-h-[80vh] mx-auto rounded-2xl border border-slate-700 shadow-2xl"/>
+    <div class="max-w-3xl w-full p-2 relative text-center">
+      <div id="lightboxContainer" class="flex flex-wrap gap-3 justify-center max-h-[85vh] overflow-y-auto p-2">
+      </div>
       <p id="imageCaption" class="text-xs text-slate-300 mt-3 font-medium tracking-wide"></p>
     </div>
   </div>
@@ -395,12 +428,12 @@
 
         <div class="space-y-3 pt-2 border-t border-slate-700/60">
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">📷 อัปเดต/เพิ่ม รูปภาพปัญหา (ไม่บังคับ)</label>
-            <input type="file" id="editIssueImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+            <label class="block text-xs font-medium text-slate-300 mb-1">📷 เพิ่มรูปภาพปัญหา (เลือกได้หลายไฟล์)</label>
+            <input type="file" id="editIssueImage" accept="image/*" multiple class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-300 mb-1">🧾 อัปเดต/เพิ่ม รูปสลิป/ใบเสร็จ (ไม่บังคับ)</label>
-            <input type="file" id="editReceiptImage" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
+            <label class="block text-xs font-medium text-slate-300 mb-1">🧾 เพิ่มรูปสลิป/ใบเสร็จ (เลือกได้หลายไฟล์)</label>
+            <input type="file" id="editReceiptImage" accept="image/*" multiple class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"/>
           </div>
         </div>
 
@@ -453,6 +486,13 @@
 
     setTodayDate('serviceDate');
     setTodayDate('serviceEndDate');
+
+    function scrollToHistory() {
+      const section = document.getElementById('serviceHistorySection');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
 
     function changeCarImage(imageSrc, thumbElement) {
       document.getElementById('mainCarImage').src = imageSrc;
@@ -528,45 +568,48 @@
       }
     }
 
-    // ฟังก์ชันอัปโหลดไฟล์ที่อ้างอิงผ่าน ID ของ input file
-    async function uploadAttachment(fileInputId, folderName) {
+    async function uploadMultipleAttachments(fileInputId, folderName) {
       const fileInput = document.getElementById(fileInputId);
       if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
         return null;
       }
 
-      const file = fileInput.files[0];
-      logDebug(`📁 กำลังอัปโหลดไฟล์: ${file.name} ไปยังโฟลเดอร์ ${folderName}...`, 'info');
+      const files = Array.from(fileInput.files);
+      let uploadedUrls = [];
 
-      try {
-        const fileExt = file.name.split('.').pop();
-        // จัดรูปแบบ path ให้สะอาดและรองรับการอ่านตรงๆ
-        const fileName = `${folderName}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        logDebug(`📁 กำลังอัปโหลดไฟล์ที่ ${i+1}/${files.length}: ${file.name} ไปยังโฟลเดอร์ ${folderName}...`, 'info');
 
-        const { error: uploadError } = await supabaseClient.storage
-          .from('service-attachments')
-          .upload(fileName, file, { upsert: true });
+        try {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${folderName}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        if (uploadError) {
-          logDebug(`❌ Supabase Storage Error: ${uploadError.message}`, 'error');
-          alert("อัปโหลดรูปไม่สำเร็จ: " + uploadError.message);
-          return null;
+          const { error: uploadError } = await supabaseClient.storage
+            .from('service-attachments')
+            .upload(fileName, file, { upsert: true });
+
+          if (uploadError) {
+            logDebug(`❌ Supabase Storage Error: ${uploadError.message}`, 'error');
+            continue;
+          }
+
+          const { data } = supabaseClient.storage
+            .from('service-attachments')
+            .getPublicUrl(fileName);
+
+          if (data && data.publicUrl) {
+            uploadedUrls.push(data.publicUrl);
+            logDebug(`✅ อัปโหลดสำเร็จ! URL: ${data.publicUrl}`, 'success');
+          }
+        } catch (err) {
+          logDebug(`❌ Upload Exception: ${err.message}`, 'error');
         }
-
-        // ดึง Public URL แบบระบุ path ตรงๆ ให้ถูกต้อง
-        const { data } = supabaseClient.storage
-          .from('service-attachments')
-          .getPublicUrl(fileName);
-
-        logDebug(`✅ อัปโหลดสำเร็จ! URL: ${data.publicUrl}`, 'success');
-        return data.publicUrl;
-      } catch (err) {
-        logDebug(`❌ Upload Exception: ${err.message}`, 'error');
-        return null;
       }
+
+      return uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : null;
     }
 
-    // 1. ฟังก์ชันบันทึกประวัติการซ่อมใหม่ (แก้ไขการส่งค่า URL รูปภาพเข้าตาราง)
     async function handleSaveService(e) {
       e.preventDefault();
       const btn = document.getElementById('btnSubmit');
@@ -587,13 +630,9 @@
         return;
       }
 
-      // ทำการอัปโหลดไฟล์และรอรับค่า Public URL กลับมา
-      const issueImageUrl = await uploadAttachment('issueImage', 'issues');
-      const receiptImageUrl = await uploadAttachment('receiptImage', 'receipts');
+      const issueImageUrl = await uploadMultipleAttachments('issueImage', 'issues');
+      const receiptImageUrl = await uploadMultipleAttachments('receiptImage', 'receipts');
 
-      logDebug(`💾 กำลังบันทึกข้อมูลลงตาราง -> Issue URL: ${issueImageUrl}, Receipt URL: ${receiptImageUrl}`, 'info');
-
-      // ส่งค่า URL เข้าฟิลด์ในตาราง service_records โดยตรง
       const { error } = await supabaseClient.from('service_records').insert([{
         part_id: partId,
         mileage_at_service: mileage,
@@ -609,7 +648,7 @@
         if (mileage > currentMileage && vehicleId) {
           await supabaseClient.from('vehicle_status').update({ current_mileage: mileage, last_updated: new Date().toISOString() }).eq('id', vehicleId);
         }
-        alert("บันทึกประวัติการซ่อมและอัปโหลดรูปภาพสำเร็จ!");
+        alert("บันทึกประวัติการซ่อมและอัปโหลดรูปภาพทั้งหมดสำเร็จ!");
         document.getElementById('serviceForm').reset();
         setTodayDate('serviceDate');
         setTodayDate('serviceEndDate');
@@ -624,7 +663,6 @@
       btn.disabled = false;
     }
 
-    // 2. ฟังก์ชันอัปเดตประวัติการซ่อม (ตอนกดแก้ไข)
     async function handleUpdateService(e) {
       e.preventDefault();
       const btn = document.getElementById('btnUpdateService');
@@ -639,19 +677,39 @@
       const cost = parseFloat(document.getElementById('editServiceCost').value) || 0;
       const notes = document.getElementById('editServiceNotes').value;
 
-      // ดึงค่า URL รูปเดิมสำรองไว้
       const modalEl = document.getElementById('editServiceModal');
       let issueImageUrl = modalEl.dataset.oldIssue || null;
       let receiptImageUrl = modalEl.dataset.oldReceipt || null;
 
-      // ถ้ามีการเลือกไฟล์ใหม่ ให้อัปโหลดและแทนที่ด้วย URL ใหม่ทันที
-      const uploadedIssueUrl = await uploadAttachment('editIssueImage', 'issues');
-      if (uploadedIssueUrl) issueImageUrl = uploadedIssueUrl;
+      const uploadedIssueUrlsStr = await uploadMultipleAttachments('editIssueImage', 'issues');
+      if (uploadedIssueUrlsStr) {
+        if (issueImageUrl) {
+          try {
+            let oldArr = JSON.parse(issueImageUrl);
+            let newArr = JSON.parse(uploadedIssueUrlsStr);
+            issueImageUrl = JSON.stringify(oldArr.concat(newArr));
+          } catch(err) {
+            issueImageUrl = uploadedIssueUrlsStr;
+          }
+        } else {
+          issueImageUrl = uploadedIssueUrlsStr;
+        }
+      }
 
-      const uploadedReceiptUrl = await uploadAttachment('editReceiptImage', 'receipts');
-      if (uploadedReceiptUrl) receiptImageUrl = uploadedReceiptUrl;
-
-      logDebug(`💾 กำลังอัปเดตข้อมูล ID ${id} -> Issue URL: ${issueImageUrl}, Receipt URL: ${receiptImageUrl}`, 'info');
+      const uploadedReceiptUrlsStr = await uploadMultipleAttachments('editReceiptImage', 'receipts');
+      if (uploadedReceiptUrlsStr) {
+        if (receiptImageUrl) {
+          try {
+            let oldArr = JSON.parse(receiptImageUrl);
+            let newArr = JSON.parse(uploadedReceiptUrlsStr);
+            receiptImageUrl = JSON.stringify(oldArr.concat(newArr));
+          } catch(err) {
+            receiptImageUrl = uploadedReceiptUrlsStr;
+          }
+        } else {
+          receiptImageUrl = uploadedReceiptUrlsStr;
+        }
+      }
 
       const { error } = await supabaseClient.from('service_records').update({
         part_id: partId,
@@ -758,8 +816,16 @@
 
           let attachmentsHtml = '<span class="text-slate-600">-</span>';
           let buttons = [];
-          if (row.issue_image_url) buttons.push(`<button onclick="viewImage('${row.issue_image_url}', 'รูปปัญหา/อะไหล่เสีย')" class="text-xs bg-rose-950/60 text-rose-400 border border-rose-800/60 px-2 py-1 rounded-lg hover:bg-rose-900 transition">📷 ปัญหา</button>`);
-          if (row.receipt_image_url) buttons.push(`<button onclick="viewImage('${row.receipt_image_url}', 'สลิป/ใบเสร็จการซ่อม')" class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2 py-1 rounded-lg hover:bg-emerald-900 transition">🧾 สลิป</button>`);
+
+          if (row.issue_image_url) {
+            let encodedUrls = encodeURIComponent(row.issue_image_url);
+            buttons.push(`<button onclick="viewImages('${encodedUrls}', 'รูปปัญหา / อะไหล่เสีย')" class="text-xs bg-rose-950/60 text-rose-400 border border-rose-800/60 px-2.5 py-1 rounded-lg hover:bg-rose-900 transition font-medium">📷 ปัญหา</button>`);
+          }
+          if (row.receipt_image_url) {
+            let encodedReceipts = encodeURIComponent(row.receipt_image_url);
+            buttons.push(`<button onclick="viewImages('${encodedReceipts}', 'สลิปโอนเงิน / ใบเสร็จอู่')" class="text-xs bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 px-2.5 py-1 rounded-lg hover:bg-emerald-900 transition font-medium">🧾 สลิป</button>`);
+          }
+
           if (buttons.length > 0) attachmentsHtml = `<div class="flex gap-1.5 flex-wrap">${buttons.join('')}</div>`;
 
           const escapedNotes = (row.notes || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -838,20 +904,38 @@
 
         const groups = {};
         data.forEach(item => {
-          const cat = item.category || 'OTHER';
-          if (!groups[cat]) groups[cat] = [];
-          groups[cat].push(item);
+          const rawCat = (item.category || 'OTHER').trim().toUpperCase();
+          if (!groups[rawCat]) groups[rawCat] = [];
+          groups[rawCat].push(item);
         });
 
-        for (const [category, items] of Object.entries(groups)) {
-          let categoryIcon = '⚙️';
-          if (category.includes('ENGINE')) categoryIcon = '🔧';
-          else if (category.includes('COOLING')) categoryIcon = '❄️';
-          else if (category.includes('TRANSMISSION')) categoryIcon = '⚙️';
-          else if (category.includes('SUSPENSION')) categoryIcon = '🚗';
-          else if (category.includes('ELECTRICAL')) categoryIcon = '⚡';
+        let allCardsHtml = '';
 
-          let cardsHtml = '';
+        for (const [category, items] of Object.entries(groups)) {
+          // ชุดไอคอน SVG เฉพาะทางสำหรับชิ้นส่วนรถยนต์ (Vector Icon สีเมทัลลิกพรีเมียม)
+          let categoryIcon = `<svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>`;
+          let badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+
+          if (category.includes('BRAKE') || category.includes('เบรก')) {
+            categoryIcon = `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>`;
+            badgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+          } else if (category.includes('COOLING') || category.includes('แอร์') || category.includes('ความร้อน') || category.includes('น้ำหล่อเย็น')) {
+            categoryIcon = `<svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3m15.364-6.364l-12.728 12.728m0-12.728l12.728 12.728"/></svg>`;
+            badgeColor = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+          } else if (category.includes('ENGINE') || category.includes('เครื่องยนต์')) {
+            categoryIcon = `<svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            badgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+          } else if (category.includes('TRANSMISSION') || category.includes('เกียร์')) {
+            categoryIcon = `<svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>`;
+            badgeColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+          } else if (category.includes('SUSPENSION') || category.includes('ช่วงล่าง') || category.includes('โช๊ค')) {
+            categoryIcon = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011 1v1a1 1 0 01-1 1H3m15-5a2 2 0 100-4 2 2 0 000 4z"/></svg>`;
+            badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+          } else if (category.includes('ELECTRICAL') || category.includes('ไฟ') || category.includes('แบตเตอรี่')) {
+            categoryIcon = `<svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+            badgeColor = 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+          }
+
           items.forEach(item => {
             let statusColor = "border-emerald-500/80 bg-emerald-950/10";
             let statusBadge = `<span class="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-1 rounded-lg border border-emerald-500/20 font-medium">ปกติ (OK)</span>`;
@@ -877,19 +961,24 @@
             const lastDateVal = item.last_service_date || '';
             const nextDateVal = item.next_due_date || '';
 
-            cardsHtml += `
+            allCardsHtml += `
               <div onclick="openEditScheduleModal('${item.part_id}', '${escapedCategory}', '${escapedPartName}', ${item.interval_km || 0}, ${item.interval_months || 0}, '${escapedDesc}', '${lastDateVal}', '${nextDateVal}')" 
-                   class="glass-card border-l-4 ${statusColor} p-5 rounded-2xl shadow-xl space-y-3 cursor-pointer hover:scale-[1.01] hover:border-blue-400 transition group relative overflow-hidden">
-                <div class="flex justify-between items-start gap-2">
-                  <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider group-hover:text-blue-400 transition">${item.category}</span>
-                  <div class="flex items-center gap-1.5">
-                    ${statusBadge}
-                    <span class="text-xs text-slate-500 group-hover:text-white transition bg-slate-800/80 p-1.5 rounded-lg border border-slate-700/60">✏️</span>
+                   class="glass-card border-l-4 ${statusColor} p-5 rounded-2xl shadow-xl space-y-3 cursor-pointer hover:scale-[1.01] hover:border-blue-400 transition group relative overflow-hidden flex flex-col justify-between">
+                <div>
+                  <div class="flex justify-between items-start gap-2 mb-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg border ${badgeColor} flex items-center gap-1.5">
+                      ${categoryIcon} ${item.category}
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      ${statusBadge}
+                      <span class="text-xs text-slate-500 group-hover:text-white transition bg-slate-800/80 p-1.5 rounded-lg border border-slate-700/60">✏️</span>
+                    </div>
                   </div>
+                  <h3 class="font-bold text-base text-white tracking-tight mt-1">${item.part_name}</h3>
+                  <div class="text-sm text-slate-200 font-medium pt-1">${remainingText}</div>
                 </div>
-                <h3 class="font-bold text-base text-white tracking-tight">${item.part_name}</h3>
-                <div class="text-sm text-slate-200 font-medium pt-0.5">${remainingText}</div>
-                <div class="text-xs text-slate-400 pt-3 border-t border-slate-700/50 space-y-1.5">
+
+                <div class="text-xs text-slate-400 pt-3 border-t border-slate-700/50 space-y-1.5 mt-3">
                   <div class="flex justify-between font-mono">
                     <span>ไมล์ล่าสุด: <span class="text-slate-200">${item.last_service_mileage ? item.last_service_mileage.toLocaleString() + ' กม.' : '-'}</span></span>
                     <span>ไมล์ถัดไป: <span class="text-slate-200">${item.next_due_mileage ? item.next_due_mileage.toLocaleString() + ' กม.' : '-'}</span></span>
@@ -902,24 +991,19 @@
               </div>
             `;
           });
-
-          container.innerHTML += `
-            <div class="space-y-3">
-              <h3 class="text-lg font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2">
-                <span>${categoryIcon}</span> หมวดหมู่: ${category}
-              </h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                ${cardsHtml}
-              </div>
-            </div>
-          `;
         }
+
+        container.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            ${allCardsHtml}
+          </div>
+        `;
+
       } catch (err) {
         logDebug(`❌ Exception in loadMaintenanceStatusView: ${err.message}`, 'error');
       }
     }
 
-    // Modal Controls
     function openServiceModal() { document.getElementById('serviceModal').classList.remove('hidden'); }
     function closeServiceModal() { document.getElementById('serviceModal').classList.add('hidden'); }
 
@@ -974,17 +1058,32 @@
       btn.disabled = false;
     }
 
-    function viewImage(url, caption) {
-      if (!url) {
+    function viewImages(encodedUrls, caption) {
+      if (!encodedUrls) {
         alert("ไม่พบลิงก์รูปภาพในรายการนี้");
         return;
       }
-      let finalUrl = url;
-      if (!url.startsWith('http')) {
-        const { data } = supabaseClient.storage.from('service-attachments').getPublicUrl(url);
-        finalUrl = data.publicUrl;
+      const rawUrls = decodeURIComponent(encodedUrls);
+      const container = document.getElementById('lightboxContainer');
+      container.innerHTML = '';
+
+      let urls = [];
+      try {
+        urls = JSON.parse(rawUrls);
+        if (!Array.isArray(urls)) urls = [rawUrls];
+      } catch (err) {
+        urls = [rawUrls];
       }
-      document.getElementById('previewImage').src = finalUrl;
+
+      urls.forEach(url => {
+        let finalUrl = url;
+        if (!url.startsWith('http')) {
+          const { data } = supabaseClient.storage.from('service-attachments').getPublicUrl(url);
+          finalUrl = data.publicUrl;
+        }
+        container.innerHTML += `<img src="${finalUrl}" class="max-h-[70vh] rounded-xl border border-slate-700 shadow-xl object-contain"/>`;
+      });
+
       document.getElementById('imageCaption').innerText = caption;
       document.getElementById('imageModal').classList.remove('hidden');
     }
@@ -1018,55 +1117,6 @@
     function closeEditServiceModal() {
       document.getElementById('editServiceModal').classList.add('hidden');
       document.getElementById('editServiceForm').reset();
-    }
-
-    async function handleUpdateService(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnUpdateService');
-      btn.innerText = "กำลังอัปโหลดรูปและบันทึก...";
-      btn.disabled = true;
-
-      const id = document.getElementById('editServiceId').value;
-      const partId = document.getElementById('editServicePartSelect').value;
-      const mileage = parseInt(document.getElementById('editServiceMileage').value);
-      const serviceDate = document.getElementById('editServiceDate').value;
-      const serviceEndDate = document.getElementById('editServiceEndDate').value;
-      const cost = parseFloat(document.getElementById('editServiceCost').value) || 0;
-      const notes = document.getElementById('editServiceNotes').value;
-
-      const modalEl = document.getElementById('editServiceModal');
-      let issueImageUrl = modalEl.dataset.oldIssue || null;
-      let receiptImageUrl = modalEl.dataset.oldReceipt || null;
-
-      // แก้ไขการเรียกใช้งานอัปโหลดรูปย้อนหลังให้ถูกต้องโดยอ้างอิงผ่าน ID ของ input file
-      const uploadedIssueUrl = await uploadAttachment('editIssueImage', 'issues');
-      if (uploadedIssueUrl) issueImageUrl = uploadedIssueUrl;
-
-      const uploadedReceiptUrl = await uploadAttachment('editReceiptImage', 'receipts');
-      if (uploadedReceiptUrl) receiptImageUrl = uploadedReceiptUrl;
-
-      const { error } = await supabaseClient.from('service_records').update({
-        part_id: partId,
-        mileage_at_service: mileage,
-        service_date: serviceDate,
-        service_end_date: serviceEndDate,
-        cost: cost,
-        notes: notes,
-        issue_image_url: issueImageUrl,
-        receipt_image_url: receiptImageUrl
-      }).eq('id', id);
-
-      if (!error) {
-        alert("อัปเดตประวัติและหลักฐานการซ่อมสำเร็จ!");
-        closeEditServiceModal();
-        initApp();
-      } else {
-        logDebug(`❌ Update Service Error: ${error.message}`, 'error');
-        alert("เกิดข้อผิดพลาดในการอัปเดต: " + error.message);
-      }
-
-      btn.innerText = "บันทึกการแก้ไข";
-      btn.disabled = false;
     }
 
     async function deleteServiceRecord() {
